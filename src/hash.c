@@ -215,7 +215,8 @@ meh_error_t meh_hash_file(MehHash hash, FILE* fd)
     unsigned char buffer[8192];
 
     if (NULL == fd || NULL == hash)
-        return MEH_INVALID_ARGUMENT;
+      return meh_error("null reference passed to meh_hash_file",
+		       MEH_INVALID_ARGUMENT);
 
     while ((count = fread(buffer, sizeof (unsigned char), 8192, fd)) != 0)
     {

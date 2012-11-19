@@ -22,23 +22,27 @@ THE SOFTWARE.
 
 #include "salsa20.h"
 
-MehSalsa20 meh_get_salsa20(const unsigned char* key, size_t key_size)
+MehSalsa20 meh_get_salsa20(const unsigned char* key,
+			   const unsigned char* iv,
+			   size_t key_size)
 {
-    MehRC4 r = malloc(sizeof (meh_rc4_state_t));
+    MehSalsa20 r = malloc(sizeof (meh_salsa20_state_t));
 
     if (NULL == r)
     {
-        meh_warn("could not allocate cipher context in meh_get_rc4");
+        meh_warn("could not allocate cipher context in meh_get_salsa20");
         return NULL;
     }
 
-    meh_reset_rc4(r, key, key_size);
+    meh_reset_salsa20(r, key, iv, key_size);
 
     return r;
 }
 
-meh_error_t meh_reset_rc4(MehRC4 rc4,
-                          const unsigned char* key, size_t key_size)
+meh_error_t meh_reset_salsa20(MehSalsa20 s20,
+			      const unsigned char* key,
+			      const unsigned char* iv,
+			      size_t key_size)
 {
     uint32_t i;
     uint8_t* state;

@@ -48,7 +48,7 @@ meh_error_t meh_reset_rc4(MehRC4 rc4,
         return meh_error("null reference passed to meh_reset_rc4",
                          MEH_INVALID_ARGUMENT);
     
-    if (key_size < 0 || key_size > 256)
+    if (key_size < 1 || key_size > 256)
         return meh_error("invalid key size passed to meh_reset_rc4",
                          MEH_INVALID_KEY_SIZE);
 
