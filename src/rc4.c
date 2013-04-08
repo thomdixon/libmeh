@@ -93,7 +93,7 @@ meh_error_t meh_update_rc4(MehRC4 rc4, const unsigned char* in,
         y += state[++x];
         tmp = state[x];
         state[x] = state[y];
-        state[y]= tmp;
+        state[y] = tmp;
 
         out[i] = in[i]^state[(uint8_t)(state[x]+state[y])];
     }

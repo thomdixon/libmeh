@@ -28,6 +28,12 @@ THE SOFTWARE.
 
 #define MEH_RC4_STATE_SIZE 256
 
+typedef struct meh_rc4_args_s
+{
+    unsigned char* key;
+    size_t key_size;
+} meh_rc4_args_t;
+
 typedef struct meh_rc4_state_s
 {
     uint8_t x,
