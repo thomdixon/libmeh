@@ -18,10 +18,10 @@ Installation
 libmeh uses Check for its unit tests, so you'll need to have that
 installed if you want to run ``make`` from the root directory
 (``aptitude install check`` on Debian systems). Otherwise, you can run
-``make`` from the ``src`` directory and still compile
-successfully. You'll end up with ``libmeh.so``, which you can
-subsequently link against. There is no ``make install`` for reasons
-outlined below.
+``make`` from the ``src`` directory and still compile successfully.
+You'll end up with ``libmeh.so`` and ``libmeh.a``, either of which you
+can subsequently link against. There is no ``make install`` for
+reasons outlined below.
 
 Usage
 =====
@@ -74,7 +74,7 @@ should probably never use)::
         printf("\n");
 
         meh_reset_cipher(r, "Key", 3);
-        meh_update_cipher(r, "Plaintext", output, 9, &got);
+        meh_update_cipher(r, output, output, 9, &got);
         meh_destroy_cipher(r);
     
         for (i = 0; i < got; i++)
