@@ -24,22 +24,38 @@ THE SOFTWARE.
 #define MEH_SALSA20_H
 
 #include "include.h"
+#include "bitwise.h"
 #include "error.h"
 
 #define MEH_SALSA20_SIGMA "expand 32-byte k";
 #define MEH_SALSA20_TAU "expand 16-byte k";
 
+#define ROTATE(v,c) (ROTL32(v,c))
+#define XOR(v,w) ((v) ^ (w))
+#define PLUS(v,w) ((uint32_t)((v) + (w)))
+#define PLUSONE(v) (PLUS((v),1))
+
+typedef struct meh_salsa20_args_s
+{
+    unsigned char* key,
+                 * iv;
+    size_t key_size;
+} meh_salsa20_args_t;
+
 typedef struct meh_salsa20_state_s
 {
     uint32_t state[16],
-             index,
-             keystream[64];
+             index;
+    
+    uint8_t keystream[64];
 } meh_salsa20_state_t;
 
 typedef meh_salsa20_state_t* MehSalsa20;
 
-MehSalsa20 meh_get_salsa20(const unsigned char*, size_t);
-meh_error_t meh_reset_salsa20(MehSalsa20, const unsigned char*, size_t);
+MehSalsa20 meh_get_salsa20(const unsigned char*,
+                           const unsigned char*, size_t);
+meh_error_t meh_reset_salsa20(MehSalsa20, const unsigned char*,
+                              const unsigned char*, size_t);
 meh_error_t meh_update_salsa20(MehSalsa20, const unsigned char*,
                                unsigned char*, size_t, size_t*);
 meh_error_t meh_finish_salsa20(MehSalsa20, unsigned char*, size_t*);

@@ -1,6 +1,8 @@
 /*
 Copyright (c) 2012 Thomas Dixon
 
+Adapted from Daniel J. Berstein's reference implementation.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -44,77 +46,148 @@ meh_error_t meh_reset_salsa20(MehSalsa20 s20,
 			      const unsigned char* iv,
 			      size_t key_size)
 {
-    uint32_t i;
-    uint8_t* state;
-    uint8_t j, tmp;
+    uint32_t* state;
+    const char* constants;
     
-    if (NULL == key || NULL == rc4)
-        return meh_error("null reference passed to meh_reset_rc4",
+    if (NULL == key || NULL == iv || NULL == s20)
+        return meh_error("null reference passed to meh_reset_salsa20",
                          MEH_INVALID_ARGUMENT);
     
-    if (key_size < 0 || key_size > 256)
-        return meh_error("invalid key size passed to meh_reset_rc4",
+    if (key_size != 16 && key_size != 32)
+        return meh_error("invalid key size passed to meh_reset_salsa20",
                          MEH_INVALID_KEY_SIZE);
 
-    state = rc4->state;
+    /* Key setup */
+    state = s20->state;
+
+    state[1] = U8TO32_LITTLE(key, 0);
+    state[2] = U8TO32_LITTLE(key, 4);
+    state[3] = U8TO32_LITTLE(key, 8);
+    state[4] = U8TO32_LITTLE(key, 12);
     
-    for (i = 0; i < MEH_RC4_STATE_SIZE; i++)
-        state[i] = i;
-
-    for (i = j = 0; i < MEH_RC4_STATE_SIZE; i++)
+    if (key_size == 32)
     {
-        j += key[i % key_size] + state[i];
-
-        tmp = state[i];
-        rc4->state[i] = state[j];
-        rc4->state[j] = tmp;
+        key += 16;
+        constants = MEH_SALSA20_SIGMA;
     }
+    else 
+    {
+        
+        constants = MEH_SALSA20_TAU;
+    }
+    
+    state[11] = U8TO32_LITTLE(key, 0);
+    state[12] = U8TO32_LITTLE(key, 4);
+    state[13] = U8TO32_LITTLE(key, 8);
+    state[14] = U8TO32_LITTLE(key, 12);
+    state[0] = U8TO32_LITTLE(constants, 0);
+    state[5] = U8TO32_LITTLE(constants, 4);
+    state[10] = U8TO32_LITTLE(constants, 8);
+    state[15] = U8TO32_LITTLE(constants, 12);
 
-    rc4->x = rc4->y = 0;
+    /* IV setup */
+    state[6] = U8TO32_LITTLE(iv, 0);
+    state[7] = U8TO32_LITTLE(iv, 4);
+    state[8] = 0;
+    state[9] = 0;
+
+    /* Force the core to be called */
+    s20->index = 64;
 
     return MEH_OK;
 }
 
-meh_error_t meh_update_rc4(MehRC4 rc4, const unsigned char* in,
-                           unsigned char* out, size_t len, size_t* got)
+static void meh_salsa20_core(uint8_t* output, const uint32_t* input)
+{
+  uint32_t x[16];
+  int i;
+
+  for (i = 0; i < 16; ++i)
+      x[i] = input[i];
+  
+  for (i = 20; i > 0; i -= 2)
+  {
+      x[ 4] = XOR(x[ 4], ROTATE(PLUS(x[ 0], x[12]),  7));
+      x[ 8] = XOR(x[ 8], ROTATE(PLUS(x[ 4], x[ 0]),  9));
+      x[12] = XOR(x[12], ROTATE(PLUS(x[ 8], x[ 4]), 13));
+      x[ 0] = XOR(x[ 0], ROTATE(PLUS(x[12], x[ 8]), 18));
+      x[ 9] = XOR(x[ 9], ROTATE(PLUS(x[ 5], x[ 1]),  7));
+      x[13] = XOR(x[13], ROTATE(PLUS(x[ 9], x[ 5]),  9));
+      x[ 1] = XOR(x[ 1], ROTATE(PLUS(x[13], x[ 9]), 13));
+      x[ 5] = XOR(x[ 5], ROTATE(PLUS(x[ 1], x[13]), 18));
+      x[14] = XOR(x[14], ROTATE(PLUS(x[10], x[ 6]),  7));
+      x[ 2] = XOR(x[ 2], ROTATE(PLUS(x[14], x[10]),  9));
+      x[ 6] = XOR(x[ 6], ROTATE(PLUS(x[ 2], x[14]), 13));
+      x[10] = XOR(x[10], ROTATE(PLUS(x[ 6], x[ 2]), 18));
+      x[ 3] = XOR(x[ 3], ROTATE(PLUS(x[15], x[11]),  7));
+      x[ 7] = XOR(x[ 7], ROTATE(PLUS(x[ 3], x[15]),  9));
+      x[11] = XOR(x[11], ROTATE(PLUS(x[ 7], x[ 3]), 13));
+      x[15] = XOR(x[15], ROTATE(PLUS(x[11], x[ 7]), 18));
+      x[ 1] = XOR(x[ 1], ROTATE(PLUS(x[ 0], x[ 3]),  7));
+      x[ 2] = XOR(x[ 2], ROTATE(PLUS(x[ 1], x[ 0]),  9));
+      x[ 3] = XOR(x[ 3], ROTATE(PLUS(x[ 2], x[ 1]), 13));
+      x[ 0] = XOR(x[ 0], ROTATE(PLUS(x[ 3], x[ 2]), 18));
+      x[ 6] = XOR(x[ 6], ROTATE(PLUS(x[ 5], x[ 4]),  7));
+      x[ 7] = XOR(x[ 7], ROTATE(PLUS(x[ 6], x[ 5]),  9));
+      x[ 4] = XOR(x[ 4], ROTATE(PLUS(x[ 7], x[ 6]), 13));
+      x[ 5] = XOR(x[ 5], ROTATE(PLUS(x[ 4], x[ 7]), 18));
+      x[11] = XOR(x[11], ROTATE(PLUS(x[10], x[ 9]),  7));
+      x[ 8] = XOR(x[ 8], ROTATE(PLUS(x[11], x[10]),  9));
+      x[ 9] = XOR(x[ 9], ROTATE(PLUS(x[ 8], x[11]), 13));
+      x[10] = XOR(x[10], ROTATE(PLUS(x[ 9], x[ 8]), 18));
+      x[12] = XOR(x[12], ROTATE(PLUS(x[15], x[14]),  7));
+      x[13] = XOR(x[13], ROTATE(PLUS(x[12], x[15]),  9));
+      x[14] = XOR(x[14], ROTATE(PLUS(x[13], x[12]), 13));
+      x[15] = XOR(x[15], ROTATE(PLUS(x[14], x[13]), 18));
+  }
+  
+  for (i = 0; i < 16; ++i)
+      x[i] = PLUS(x[i], input[i]);
+  
+  for (i = 0; i < 16; ++i)
+      U32TO8_LITTLE(output, x[i], 4*i);
+}
+
+meh_error_t meh_update_salsa20(MehSalsa20 s20, const unsigned char* in,
+                               unsigned char* out, size_t len, size_t* got)
 {
     uint32_t i;
-    uint8_t* state;
-    uint8_t x, y, tmp;
+    uint32_t index;
+    uint32_t* state;
+    uint8_t* keystream;
     
-    if (NULL == in || NULL == got ||  NULL == out || NULL == rc4)
-        return meh_error("null reference passed to meh_update_rc4",
+    if (NULL == in || NULL == got ||  NULL == out || NULL == s20)
+        return meh_error("null reference passed to meh_update_salsa20",
                          MEH_INVALID_ARGUMENT);
     if (!len)
         return MEH_OK;
-
-    x = rc4->x;
-    y = rc4->y;
-    state = rc4->state;
-
-    for (i = 0; i < len; i++)
+    
+    state = s20->state;
+    keystream = s20->keystream;
+    
+    index = s20->index;
+    for (i = 0; i < len; i++, index++)
     {
-        y += state[++x];
-        tmp = state[x];
-        state[x] = state[y];
-        state[y]= tmp;
+        if (64 == index)
+        { 
+            meh_salsa20_core(keystream, state);
+            index = 0;
+        }
 
-        out[i] = in[i]^state[(uint8_t)(state[x]+state[y])];
+        out[i] = in[i] ^ keystream[index];
     }
 
-    rc4->x = x;
-    rc4->y = y;
-
+    s20->index = index;
+    
     *got = len;
 
     return MEH_OK;
 }
 
-meh_error_t meh_finish_rc4(MehRC4 rc4, unsigned char* out, size_t* got)
+meh_error_t meh_finish_salsa20(MehSalsa20 s20, unsigned char* out, size_t* got)
 {
     /* This is a dummy function for consistency. */
     *got = 0;
 
     return MEH_OK;
 }
-    

@@ -26,15 +26,19 @@ THE SOFTWARE.
 #include "include.h"
 #include "error.h"
 #include "rc4.h"
+#include "salsa20.h"
 
 typedef enum
 {
-    MEH_RC4
+    MEH_RC4,
+    MEH_SALSA20
 } meh_cipher_id;
 
 typedef union meh_cipher_state_u
 {
     MehRC4 rc4;
+    MehSalsa20 salsa20;
+    
 } meh_cipher_state_t;
 
 typedef struct meh_cipher_s
@@ -44,6 +48,12 @@ typedef struct meh_cipher_s
 } meh_cipher_t;
 
 typedef meh_cipher_t* MehCipher;
+
+typedef union meh_cipher_args_u
+{
+    meh_rc4_args_t rc4;
+    meh_salsa20_args_t salsa20;
+} meh_cipher_args_t;
 
 MehCipher meh_get_cipher(const meh_cipher_id, ...);
 meh_error_t meh_reset_cipher(MehCipher, ...);

@@ -22,17 +22,6 @@ THE SOFTWARE.
 
 #include "cipher.h"
 
-typedef struct meh_rc4_args_s
-{
-    unsigned char* key;
-    size_t key_size;
-} meh_rc4_args_t;
-
-typedef union meh_cipher_args_u
-{
-    meh_rc4_args_t rc4;
-} meh_cipher_args_t;
-
 MehCipher _meh_get_cipher(const meh_cipher_id cipher_id, va_list args)
 {
     meh_cipher_args_t cipher_args;
@@ -53,6 +42,15 @@ MehCipher _meh_get_cipher(const meh_cipher_id cipher_id, va_list args)
             cipher_args.rc4.key_size = va_arg(args, size_t);
             r->state.rc4 = meh_get_rc4(cipher_args.rc4.key,
                                        cipher_args.rc4.key_size);
+            break;
+
+        case MEH_SALSA20:
+            cipher_args.salsa20.key = va_arg(args, unsigned char*);
+            cipher_args.salsa20.iv = va_arg(args, unsigned char*);
+            cipher_args.salsa20.key_size = va_arg(args, size_t);
+            r->state.salsa20 = meh_get_salsa20(cipher_args.salsa20.key,
+                                               cipher_args.salsa20.iv,
+                                               cipher_args.salsa20.key_size);
             break;
             
         default: /* shouldn't happen, but just in case */
@@ -90,6 +88,16 @@ meh_error_t _meh_reset_cipher(MehCipher cipher, va_list args)
                                   cipher_args.rc4.key,
                                   cipher_args.rc4.key_size);
             break;
+
+        case MEH_SALSA20:
+            cipher_args.salsa20.key = va_arg(args, unsigned char*);
+            cipher_args.salsa20.iv = va_arg(args, unsigned char*);
+            cipher_args.salsa20.key_size = va_arg(args, size_t);
+            error = meh_reset_salsa20(cipher->state.salsa20,
+                                      cipher_args.salsa20.key,
+                                      cipher_args.salsa20.iv,
+                                      cipher_args.salsa20.key_size);
+            break;
             
         default: /* shouldn't happen, but just in case */
             return meh_error("invalid cipher id passed to _meh_reset_cipher",
@@ -121,6 +129,15 @@ meh_error_t meh_update_cipher(MehCipher cipher, const unsigned char* in,
         case MEH_RC4:
             error = meh_update_rc4(cipher->state.rc4, in, out, len, got);
             break;
+
+        case MEH_SALSA20:
+            error = meh_update_salsa20(cipher->state.salsa20,
+                                       in,
+                                       out,
+                                       len,
+                                       got);
+            break;
+            
         default: /* shouldn't happen, but just in case */
             return meh_error("invalid cipher id passed to meh_update_cipher",
                              MEH_INVALID_CIPHER);
@@ -137,6 +154,10 @@ meh_error_t meh_finish_cipher(MehCipher cipher, unsigned char* out, size_t* got)
     {
         case MEH_RC4:
             error = meh_finish_rc4(cipher->state.rc4, out, got);
+            break;
+
+        case MEH_SALSA20:
+            error = meh_finish_salsa20(cipher->state.salsa20, out, got);
             break;
             
         default: /* shouldn't happen, but just in case */
