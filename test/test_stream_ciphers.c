@@ -26,24 +26,24 @@ START_TEST (test_rc4)
     meh_error_t result;
     unsigned char* data;
     size_t got;
-    
+
     data = malloc(512);
     fail_if(NULL == data, "Could not allocate cipher buffer.");
-    
+
     c = meh_get_cipher(MEH_RC4, (const unsigned char *)"\0\0\0\0\0\0\0\0", 8);
     fail_if(NULL == c, "Could not allocate cipher context.");
-    
+
     /* Empty string */
     result = meh_update_cipher(c, (const unsigned char *)"0", data, 0, &got);
     fail_unless(MEH_OK == result, NULL);
     fail_unless(got == 0, NULL);
-    
+
     /* All zeros */
     result = meh_update_cipher(c, (const unsigned char *)"\0\0\0\0\0\0\0\0", data, 8, &got);
     fail_unless(MEH_OK == result, NULL);
     fail_unless(got == 8, NULL);
     fail_unless(raw_equals_hex(data, "de188941a3375d3a", 8), NULL);
-    
+
     /* Larger than state length ciphertext */
     memset(data, 0x01, 512);
     meh_reset_cipher(c, (const unsigned char *)"\x01\x23\x45\x67\x89\xab\xcd\xef", 8);
@@ -59,8 +59,8 @@ START_TEST (test_rc4)
                                "b65f62093b1e0db9e5ba532fafec47508323e671327df9444432cb7367cec82f"
                                "5d44c0d00b67d650a075cd4b70dedd77eb9b10231b6b5b741347396d62897421"
                                "d43df9b42e446e358e9c11a9b2184ecbef0cd8e7a877ef968f1390ec9b3d35a5"
-                               "585cb009290e2fcde7b5ec66d9084be44055a619d9dd7fc3166f9487f7cb2729" 
-                               "12426445998514c15d53a18c864ce3a2b7555793988126520eacf2e3066e230c"  
+                               "585cb009290e2fcde7b5ec66d9084be44055a619d9dd7fc3166f9487f7cb2729"
+                               "12426445998514c15d53a18c864ce3a2b7555793988126520eacf2e3066e230c"
                                "91bee4dd5304f5fd0405b35bd99c73135d3d9bc335ee049ef69b3867bf2d7bd1"
                                "eaa595d8bfc0066ff8d31509eb0c6caa006c807a623ef84c3d33c195d23ee320"
                                "c40de0558157c822d4b8c569d849aed59d4e0fd7f379586b4b7ff684ed6a189f"
@@ -78,7 +78,7 @@ START_TEST (test_salsa20)
     meh_error_t result;
     unsigned char* data;
     size_t got;
- 
+
     data = malloc(64);
     fail_if(NULL == data, "Could not allocate cipher buffer.");
 
@@ -92,7 +92,7 @@ START_TEST (test_salsa20)
     result = meh_update_cipher(c, (const unsigned char *)"0", data, 0, &got);
     fail_unless(MEH_OK == result, NULL);
     fail_unless(got == 0, NULL);
-    
+
     /* All zeros, 128 bit key */
     memset(data, 0, 64);
     result = meh_update_cipher(c, data, data, 64, &got);
@@ -120,7 +120,7 @@ START_TEST (test_salsa20)
                                64), NULL);
 
     free(data);
-    
+
 }
 END_TEST
 

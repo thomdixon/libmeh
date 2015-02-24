@@ -48,11 +48,11 @@ meh_error_t meh_reset_salsa20(MehSalsa20 s20,
 {
     uint32_t* state;
     const char* constants;
-    
+
     if (NULL == key || NULL == iv || NULL == s20)
         return meh_error("null reference passed to meh_reset_salsa20",
                          MEH_INVALID_ARGUMENT);
-    
+
     if (key_size != 16 && key_size != 32)
         return meh_error("invalid key size passed to meh_reset_salsa20",
                          MEH_INVALID_KEY_SIZE);
@@ -64,18 +64,18 @@ meh_error_t meh_reset_salsa20(MehSalsa20 s20,
     state[2] = U8TO32_LITTLE(key, 4);
     state[3] = U8TO32_LITTLE(key, 8);
     state[4] = U8TO32_LITTLE(key, 12);
-    
+
     if (key_size == 32)
     {
         key += 16;
         constants = MEH_SALSA20_SIGMA;
     }
-    else 
+    else
     {
-        
+
         constants = MEH_SALSA20_TAU;
     }
-    
+
     state[11] = U8TO32_LITTLE(key, 0);
     state[12] = U8TO32_LITTLE(key, 4);
     state[13] = U8TO32_LITTLE(key, 8);
@@ -104,7 +104,7 @@ static void meh_salsa20_core(uint8_t* output, const uint32_t* input)
 
   for (i = 0; i < 16; ++i)
       x[i] = input[i];
-  
+
   for (i = 20; i > 0; i -= 2)
   {
       x[ 4] = XOR(x[ 4], ROTATE(PLUS(x[ 0], x[12]),  7));
@@ -140,10 +140,10 @@ static void meh_salsa20_core(uint8_t* output, const uint32_t* input)
       x[14] = XOR(x[14], ROTATE(PLUS(x[13], x[12]), 13));
       x[15] = XOR(x[15], ROTATE(PLUS(x[14], x[13]), 18));
   }
-  
+
   for (i = 0; i < 16; ++i)
       x[i] = PLUS(x[i], input[i]);
-  
+
   for (i = 0; i < 16; ++i)
       U32TO8_LITTLE(output, x[i], 4*i);
 }
@@ -155,21 +155,19 @@ meh_error_t meh_update_salsa20(MehSalsa20 s20, const unsigned char* in,
     uint32_t index;
     uint32_t* state;
     uint8_t* keystream;
-    
+
     if (NULL == in || NULL == got ||  NULL == out || NULL == s20)
         return meh_error("null reference passed to meh_update_salsa20",
                          MEH_INVALID_ARGUMENT);
-    if (!len)
-        return MEH_OK;
-    
+
     state = s20->state;
     keystream = s20->keystream;
-    
+
     index = s20->index;
     for (i = 0; i < len; i++, index++)
     {
         if (64 == index)
-        { 
+        {
             meh_salsa20_core(keystream, state);
             index = 0;
         }
@@ -178,7 +176,7 @@ meh_error_t meh_update_salsa20(MehSalsa20 s20, const unsigned char* in,
     }
 
     s20->index = index;
-    
+
     *got = len;
 
     return MEH_OK;

@@ -43,17 +43,17 @@ meh_error_t meh_reset_rc4(MehRC4 rc4,
     uint32_t i;
     uint8_t* state;
     uint8_t j, tmp;
-    
+
     if (NULL == key || NULL == rc4)
         return meh_error("null reference passed to meh_reset_rc4",
                          MEH_INVALID_ARGUMENT);
-    
+
     if (key_size < 1 || key_size > 256)
         return meh_error("invalid key size passed to meh_reset_rc4",
                          MEH_INVALID_KEY_SIZE);
 
     state = rc4->state;
-    
+
     for (i = 0; i < MEH_RC4_STATE_SIZE; i++)
         state[i] = i;
 
@@ -77,12 +77,10 @@ meh_error_t meh_update_rc4(MehRC4 rc4, const unsigned char* in,
     uint32_t i;
     uint8_t* state;
     uint8_t x, y, tmp;
-    
+
     if (NULL == in || NULL == got ||  NULL == out || NULL == rc4)
         return meh_error("null reference passed to meh_update_rc4",
                          MEH_INVALID_ARGUMENT);
-    if (!len)
-        return MEH_OK;
 
     x = rc4->x;
     y = rc4->y;
@@ -113,4 +111,3 @@ meh_error_t meh_finish_rc4(MehRC4 rc4, unsigned char* out, size_t* got)
 
     return MEH_OK;
 }
-    
