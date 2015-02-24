@@ -2,7 +2,7 @@
 libmeh - cryptography for lazy people
 =====================================
 
-About 
+About
 -----
 
 libmeh is a small cryptographic library written in C99 that has been
@@ -64,60 +64,64 @@ you're given.
 Here's some example code for encrypting a string with RC4 (which you
 should probably never use):
 
-    #include <stdlib.h>
-    #include "meh.h"
+```c
+#include <stdlib.h>
+#include "meh.h"
 
-    int main(void) {
-        unsigned char output[9]; 
-        size_t got;
-        int i;
+int main(void) {
+    unsigned char output[9];
+    size_t got;
+    int i;
 
-        MehCipher r = meh_get_cipher(MEH_RC4, "Key", 3);
-        meh_update_cipher(r, "Plaintext", output, 9, &got);
+    MehCipher r = meh_get_cipher(MEH_RC4, "Key", 3);
+    meh_update_cipher(r, "Plaintext", output, 9, &got);
 
-        for (i = 0; i < got; i++)
-            printf("%02x", output[i]);
-        printf("\n");
+    for (i = 0; i < got; i++)
+        printf("%02x", output[i]);
+    printf("\n");
 
-        meh_reset_cipher(r, "Key", 3);
-        meh_update_cipher(r, output, output, 9, &got);
-        meh_finish_cipher(r);
-        meh_destroy_cipher(r);
-    
-        for (i = 0; i < got; i++)
-            printf("%02x", output[i]);
-        printf("\n");
+    meh_reset_cipher(r, "Key", 3);
+    meh_update_cipher(r, output, output, 9, &got);
+    meh_finish_cipher(r);
+    meh_destroy_cipher(r);
 
-        return EXIT_SUCCESS;
-    }
+    for (i = 0; i < got; i++)
+        printf("%02x", output[i]);
+    printf("\n");
+
+    return EXIT_SUCCESS;
+}
+```
 
 Not particularly pretty, but C rarely ever is. It's also possible to
 use a key derivation function, such as PBKDF2, in order to generate a
 key for a cipher:
 
-    #include <stdlib.h>
-    #include "meh.h"
+```c
+#include <stdlib.h>
+#include "meh.h"
 
-    int main(void) {
+int main(void) {
 
-        unsigned char output[32];
-        size_t got;
-        int i;
+    unsigned char output[32];
+    size_t got;
+    int i;
 
-        MehKDF k = meh_get_kdf(MEH_PBKDF2, MEH_SHA1,
-                               "password", 8,
-                               "ATHENA.MIT.EDUraeburn", 21,
-                               1200);
-        meh_update_kdf(k, output, 32, &got);
-        meh_finish_kdf(k);
-        meh_destroy_kdf(k);
-    
-        for (i = 0; i < 32; i++)
-            printf("%02x", output[i]);
-        printf("\n");
- 
-        return EXIT_SUCCESS;
-    }
+    MehKDF k = meh_get_kdf(MEH_PBKDF2, MEH_SHA1,
+                           "password", 8,
+                           "ATHENA.MIT.EDUraeburn", 21,
+                           1200);
+    meh_update_kdf(k, output, 32, &got);
+    meh_finish_kdf(k);
+    meh_destroy_kdf(k);
+
+    for (i = 0; i < 32; i++)
+        printf("%02x", output[i]);
+    printf("\n");
+
+    return EXIT_SUCCESS;
+}
+```
 
 As you can see, the code for these vastly different primitives follows
 a very similar structure.
