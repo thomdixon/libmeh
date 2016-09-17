@@ -95,16 +95,14 @@ meh_error_t meh_reset_pbkdf2(MehPBKDF2 kdf,
                          MEH_INVALID_ARGUMENT);
 
     if (NULL == kdf->password)
-    {
         kdf->password = malloc(pass_len);
-        kdf->pass_len = pass_len;
-    }
-    else
-        if (kdf->pass_len < pass_len)
-            kdf->password = realloc(kdf->password, pass_len);
+    else if (kdf->pass_len < pass_len)
+        kdf->password = realloc(kdf->password, pass_len);
 
     if (NULL == kdf->password)
         return MEH_OUT_OF_MEMORY;
+        
+    kdf->pass_len = pass_len;
 
     memcpy(kdf->password, password, pass_len);
 
